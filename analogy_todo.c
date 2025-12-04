@@ -7,73 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
-
-#define VOCAB_SIZE 10000     // Hitz kopuru maximoa -- Maximo num. de palabras
-#define EMB_SIZE 50  	     // Embedding-en kopurua hitzeko -- Nº de embedding-s por palabra
-#define TAM 25		     // Hiztegiko hitzen tamaina maximoa -- Tamaño maximo del diccionario
-
-
-// Hitz baten indizea kalkulatzeko funtzioa
-// Función para calcular el indice de una palabra 
-int word2ind(char* word, char** dictionary, int numwords) {
-	for (int i = 0; i < numwords; i++) {
-		if (strcmp(word, dictionary[i]) == 0) {
-			return i;
-		}
-	}
-	return -1;  // if the word is not found
-}
-
-// Bi bektoreen arteko biderketa eskalarra kalkulatzeko funtzioa
-// Función para calcular el producto escalar entre dos vectores
-double dot_product(float* a, float* b, int size) {
-	double result = 0;
-	for (int i = 0; i < size; i++) {
-		result += a[i] * b[i];
-	}
-	return result;
-}
-
-// Bi bektoreen arteko norma (magnitudea) kalkulatzeko funtzioa
-// Función para calcular la norma (magnitud) de un vector
-float magnitude(float* vec, int size) {
-	float sum = 0;
-	for (int i = 0; i < size; i++) {
-		sum += vec[i] * vec[i];
-	}
-	return sqrt(sum);
-}
-
-// Bi bektoreen arteko kosinu antzekotasuna kalkulatzeko funtzioa
-// Función para calcular la similitud coseno entre dos vectores
-float cosine_similarity(float* vec1, float* vec2, int size) {
-	float mag1, mag2;
-
-	mag1 = magnitude(vec1, size);
-	mag2 = magnitude(vec2, size);
-	return dot_product(vec1, vec2, size) / (mag1 * mag2);
-}
-
-// Analogia kalkulatzeko funtzioa
-// Función para calcular la analogía
-void perform_analogy(float *words, int idx1, int idx2, int idx3, float *result_vector) {
-	/*****************************************************************
-	  result_vector = word1_vector - word2_vector + word3_vector
-	  OSATZEKO - PARA COMPLETAR
-	 *****************************************************************/
-	int i;
-	for (i =0; i
-} 
-
-// Lortutako bektorearen gertukoen hitza bilatzeko funtzioa 
-// Función para encontrar la palabra más cercana al vector resultante
-void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity) {
-	/*******************************************************
-	  OSATZEKO - PARA COMPLETAR
-	  find closest word using cosine_similarity function
-	 ********************************************************/
-}
-
+#include "biblioteca_funciones.h"
 
 int main(int argc, char *argv[]) 
 {
@@ -134,11 +68,7 @@ int main(int argc, char *argv[])
 	printf("Introduce las dos palabras analogas y la palabra a la que le quieres buscar la analogia: \n");
 	scanf ("%s %s %s",target_word1, target_word2, target_word3);
 
-	/*********************************************************************
-	  OSATZEKO - PARA COMPLETAR
-	  Sartutako hitzen indizeak kalkulatu (idx1, idx2 & idx3) word2ind funtzioa erabilita
-	  Calcular los indices de las palabras introducidas (idx1, idx2 & idx3) con la funcion word2ind     
-	 **********************************************************************/
+	//calculamos los indices y lanzamos errores si no estan en los diccionarios:
 	idx1 = word2ind(target_word1,dictionary,numwords);
 	idx2 = word2ind(target_word2,dictionary,numwords);
 	idx3 = word2ind(target_word3,dictionary,numwords);
@@ -157,11 +87,14 @@ int main(int argc, char *argv[])
 	}
 	printf("se han encontrado correctamente las 3 palabras en el diccionario");
 	clock_gettime (CLOCK_REALTIME, &t0);
+
 	/***************************************************/
 	//    OSATZEKO - PARA COMPLETAR
 	//     1. call perform_analogy function
 	//     2. call find_closest_word function   
 	/***************************************************/  
+	//operamos los vectores de las respectivas palabras para obtener el vector de la palabra que mas se pareceria
+	perform_analogy(words,idx1,idx2,idx3,result_vector);
 	clock_gettime (CLOCK_REALTIME, &t1);   
 
 	if (closest_word_idx != -1) {
