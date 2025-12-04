@@ -8,11 +8,10 @@
 #include <time.h>
 
 
-#define VOCAB_SIZE 10000     // Hitz kopuru maximoa -- Maximo num. de palabras
-#define EMB_SIZE 50  	     // Embedding-en kopurua hitzeko -- Nº de embedding-s por palabra
+#define VOCAB_SIZE 1000     // Maximo num. de palabras
+#define EMB_SIZE 50  	     // Nº de embedding-s por palabra
 
 
-// Bi bektoreen arteko biderketa eskalarra kalkulatzeko funtzioa
 // Función para calcular el producto escalar entre dos vectores
 double dot_product(float* a, float* b, int size) {
     double result = 0;
@@ -22,7 +21,6 @@ double dot_product(float* a, float* b, int size) {
     return result;
 }
 
-// Bi bektoreen arteko norma (magnitudea) kalkulatzeko funtzioa
 // Función para calcular la norma (magnitud) de un vector
 float magnitude(float* vec, int size) {
     float sum = 0;
@@ -32,7 +30,6 @@ float magnitude(float* vec, int size) {
     return sqrt(sum);
 }
 
-// Bi bektoreen arteko kosinu antzekotasuna kalkulatzeko funtzioa
 // Función para calcular la similitud coseno entre dos vectores
 float cosine_similarity(float* vec1, float* vec2, int size) {
     float mag1, mag2;
@@ -43,16 +40,20 @@ float cosine_similarity(float* vec1, float* vec2, int size) {
 }
 
 
-// kNN hitz guztietarako -- kNN para todas las palabras
+// kNN para todas las palabras
 void knn_complet(float *words, int numwords, float *similarities) {
     int i,j;
     
 /******************************************************************
-    // Hitz bakoitzak beste guztien duen antzekotasuna kalkulatu 
     // Calcula la similitud de cada palabra con todas las demas
 
-    //    OSATZEKO - PARA COMPLETAR
+    //    PARA COMPLETAR
 ******************************************************************/
+    for(int i = 0; i < numwords; i++){
+        for(int j = 0; j < numwords; j++){
+            similarities[i*numwords+j] = cosine_similarity(&words[i*EMB_SIZE], &words[j*EMB_SIZE], EMB_SIZE);
+        }
+    }
 }
 
 
@@ -90,11 +91,13 @@ int main(int argc, char *argv[])
   printf ("numwords = %d\n", numwords);
 
 /******************************************************************
-    // Memoria dinamikoki esleitu words eta similarities datu-egiturei
     // Asignar memoria dinámica a las estructuras de datos words y similarities
 
     //    OSATZEKO - PARA COMPLETAR
 ******************************************************************/
+
+  words = (float *)malloc(numwords*EMB_SIZE*sizeof(float));
+  similarities = (float *)malloc(numwords*numwords*EMB_SIZE*sizeof(float));
       
   for (i=0; i<numwords; i++) {
    for (j=0; j<EMB_SIZE; j++) {
@@ -111,6 +114,7 @@ int main(int argc, char *argv[])
     
     //    OSATZEKO - PARA COMPLETAR
 ******************************************************************/
+  knn_complet(words, numwords, similarities);
   clock_gettime (CLOCK_REALTIME, &t1);
    
   tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
