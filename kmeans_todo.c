@@ -63,7 +63,14 @@ double word_distance (float *word1, float *word2)
 {
     /****************************************************************************************
       OSATZEKO - PARA COMPLETAR
+      ????????????????????????????????? no se si es correcto
     ****************************************************************************************/
+
+    double distancia = 0;
+    for(int i = 0; i < EMB_SIZE; i++){
+        distancia += pow((word1[i] - word2[i]), 2);
+    }
+    return sqrt(distancia);
 }
 
 // Zentroideen hasierako balioak ausaz -- Inicializar centroides aleatoriamente
@@ -165,7 +172,19 @@ double validation (float *words, struct clusterinfo *members, float *centroids, 
     disbat = centroid_homogeneity(centroids, i, numclusters);
     cent_homog[i] = disbat / (numclusters-1);	// 5 multzo badira, 4 distantzia batu dira -- si son 5 clusters, se han sumado 4 dist.
   }
-  
+
+    //cambio no se si estará bien
+    cvi = 0;
+    for(int j = 0; j < numclusters; j++){
+        if(clust_homog[i]>cent_homog[i]){
+            cvi += (clust_homog[i]-cent_homog[i])/clust_homog[i];
+        }
+        else {
+            cvi += (clust_homog[i]-cent_homog[i])/cent_homog[i];
+        }
+    }
+    cvi = cvi/numclusters;
+    
   // cvi index
     /****************************************************************************************
       OSATZEKO - PARA COMPLETAR
