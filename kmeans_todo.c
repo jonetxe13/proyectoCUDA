@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <float.h>
+#include "biblioteca_funciones.h" 
 struct clusterinfo	 // clusterrei buruzko informazioa -- informacion de los clusters
 {
 	int  elements[VOCAB_SIZE]; 	// osagaiak -- elementos
@@ -15,35 +16,7 @@ struct clusterinfo	 // clusterrei buruzko informazioa -- informacion de los clus
 
 
 // Bi bektoreen arteko biderketa eskalarra kalkulatzeko funtzioa
-// Función para calcular el producto escalar entre dos vectores
-float dot_product(float* a, float* b, int dim) {
-	float result = 0;
-	for (int i = 0; i < dim; i++) {
-		result += a[i] * b[i];
-	}
-	return result;
-}
 
-// Bi bektoreen arteko norma (magnitudea) kalkulatzeko funtzioa
-// Función para calcular la norma (magnitud) de un vector
-float magnitude(float* vec, int dim) {
-	float sum = 0;
-	for (int i = 0; i < dim; i++) {
-		sum += vec[i] * vec[i];
-	}
-	return sqrt(sum);
-}
-
-// Bi bektoreen arteko kosinu antzekotasuna kalkulatzeko funtzioa
-// Función para calcular la similitud coseno entre dos vectores
-float cosine_similarity(float* vec1, float* vec2, int dim) {
-	float mag1, mag2;
-
-	mag1 = magnitude(vec1, dim);
-	mag2 = magnitude(vec2, dim);
-	if (mag1 == 0 || mag2 == 0) return 0; // Bektoreren bat 0 bada -- Si alguno de los vectores es nulo: cosine_similarity = 0
-	else return dot_product(vec1, vec2, dim) / (mag1 * mag2);
-}
 
 // Distantzia euklidearra: bi hitzen kenketa ber bi, eta atera erro karratua
 // Distancia euclidea: raiz cuadrada de la resta de dos palabras elevada al cuadrado
@@ -110,6 +83,27 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 	  - Hitz bakoitzari cluster gertukoena esleitu cosine_similarity funtzioan oinarrituta
 	  - Asignar cada palabra al cluster más cercano basandose en la función cosine_similarity       
 	 ****************************************************************************************/
+
+	//NOTA DE MARCOS:
+	//no entiendo porque usar "dim" en vez de EMB_SIZE, a lo mejor no te he entendido algo, pero en todo el resto del proyecto se usa EMB_SIZE sin problema
+	int i,j,centroideFinal;
+	double minDist =DBL_MAX;
+	double dist;
+	for (i = 0; i < numwords; i++) {
+		for (j = 0; j < numclusters; j++) {
+			dist=word_distance (&words[i*dim],&centroids[j*dim]);
+			if ( dist < minDist){
+				minDist=dist;	
+				centroideFinal=j;	
+			}
+		}
+		if(	wordcent[i]!=centroideFinal)
+		{
+			* changed = 1;
+			wordcent[i]=centroideFinal;
+		}
+		minDist =DBL_MAX;
+	}
 	//por cada palabra...
 	//por cada centroide...
 	//calcular distancia palabra-centroide
@@ -125,21 +119,21 @@ double cluster_homogeneity(float *words, struct clusterinfo *members, int i, int
 	  Cluster bakoitzean, hitz bikote guztien arteko distantziak - En cada cluster, las distancias entre todos los pares de elementos
 	  Adi, i-j neurtuta, ez da gero j-i neurtu behar  / Ojo, una vez calculado el par i-j no hay que calcular el j-i
 	 ****************************************************************************************/
-	int *resultados = calloc(members.number*members.number,sizeof(int));//matriz para que no se pisen los calculos
-	int i,j;
+	int *resultados = calloc(members[i].number*members[i].number,sizeof(int));//matriz para que no se pisen los calculos
+	int k,j;
 	double adevolver= 0.0;
-	for(i;i<members.number;i++){
-		for(j;j<members.number;j++){
-			if(!resultados[i*member.number + j])//juraria que esto funciona, lo hago para no repetir
+	for(k;k<members[i].number;k++){
+		for(j;j<members[i].number;j++){
+			if(!resultados[k*members[i].number + j])//juraria que esto funciona, lo hago para no repetir
 			{	
-				resultados[j*member.number + i]++;//marcamos "el contrario", si hemos hecho distancia (i,j), marcamos para no hacer (j,i)
-				adevolver += word_distance (&words[member.elements[i],&words[member.elements[j]);
+				resultados[j*members[i].number + k]+=1;//marcamos "el contrario", si hemos hecho distancia (k,j), marcamos para no hacer (j,k)
+				adevolver += word_distance (&words[members[i].elements[k]*EMB_SIZE],&words[members[i].elements[j]*EMB_SIZE]);
 			}
 		}
 	}
 
 	free(resultados);
-	return adevolver/members.number;
+	return adevolver/members[i].number;
 }
 
 
@@ -154,7 +148,7 @@ double centroid_homogeneity(float *centroids, int i, int numclusters)
 	int j; 
 	double distancia = 0.0;
 	for(j = 0;j < numclusters ; j++){
-		distancia += word_distance (&centroid[i],&centroid[j]);
+		distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
 	}
 	return distancia/numclusters;
 }
@@ -320,38 +314,37 @@ int main(int argc, char *argv[])
 		  if (cvi appropriate) end classification;
 		  else  continue classification;	
 		 ****************************************************************************************/
+	} 
+
+	clock_gettime (CLOCK_REALTIME, &t1);
+	/******************************************************************/
+
+	for (i=0; i<numclusters; i++)
+		printf ("%d. cluster, %d words \n", i, cluster_sizes[i]);
+
+	tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
+	printf("\n Tej. (serie) = %1.3f ms\n\n", tej*1000);
+
+	// Idatzi clusterrak fitxategietan -- Escribir los clusters en el fichero
+	f3 = fopen (argv[3], "w");
+	if (f3 == NULL) {
+		printf ("Errorea %s fitxategia irekitzean -- Error abriendo fichero\n", argv[3]);
+		exit (-1);
 	}
-} 
 
-clock_gettime (CLOCK_REALTIME, &t1);
-/******************************************************************/
+	for (i=0; i<numwords; i++)
+		fprintf (f3, "%s \t\t -> %d cluster\n", hiztegia[i], wordcent[i]);
+	printf ("clusters written\n");
 
-for (i=0; i<numclusters; i++)
-printf ("%d. cluster, %d words \n", i, cluster_sizes[i]);
+	fclose (f1);
+	fclose (f2);
+	fclose (f3);
 
-tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
-printf("\n Tej. (serie) = %1.3f ms\n\n", tej*1000);
-
-// Idatzi clusterrak fitxategietan -- Escribir los clusters en el fichero
-f3 = fopen (argv[3], "w");
-if (f3 == NULL) {
-	printf ("Errorea %s fitxategia irekitzean -- Error abriendo fichero\n", argv[3]);
-	exit (-1);
-}
-
-for (i=0; i<numwords; i++)
-fprintf (f3, "%s \t\t -> %d cluster\n", hiztegia[i], wordcent[i]);
-printf ("clusters written\n");
-
-fclose (f1);
-fclose (f2);
-fclose (f3);
-
-free(words);
-for (i=0; i<numwords;i++) free (hiztegia[i]);
-free(hiztegia); 
-free(cluster_sizes);
-free(centroids);
-return 0;
+	free(words);
+	for (i=0; i<numwords;i++) free (hiztegia[i]);
+	free(hiztegia); 
+	free(cluster_sizes);
+	free(centroids);
+	return 0;
 }
 
