@@ -1,6 +1,8 @@
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include "biblioteca_funciones.h"
+#include <stdlib.h>
 
 //-------------------
 // COMPARTIDAS:
@@ -45,29 +47,34 @@ int word2ind(char* word, char** dictionary, int numwords) {
 
 // Función para calcular la analogía
 void perform_analogy(float *words, int idx1, int idx2, int idx3, float *result_vector) {
+	//printf("se va a calcular la analogia\n");
+	//printf("vector con indice %i\n",idx1);
+	//printf("vector con indice %i\n",idx2);
+	//printf("vector con indice %i\n",idx3);
+	//imprimir_vector_float(&words[idx1*EMB_SIZE],EMB_SIZE);
+	//imprimir_vector_float(&words[idx2*EMB_SIZE],EMB_SIZE);
+	//imprimir_vector_float(&words[idx3*EMB_SIZE],EMB_SIZE);
 	int i;
-	for(i;i<EMB_SIZE;i++){
+	for(i=0;i<EMB_SIZE;i++){
 		result_vector[i]=words[idx1*EMB_SIZE+i]-words[idx2*EMB_SIZE+i]+words[idx3*EMB_SIZE+i];
 	}
+	//imprimir_vector_float(result_vector,EMB_SIZE);
 	return;
 }
 
 // Función para encontrar la palabra más cercana al vector resultante
 void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity) {
-	/*******************************************************
-	 *       OSATZEKO - PARA COMPLETAR
-	 *             find closest word using cosine_similarity function
-	                  ********************************************************/
 	int i,j;
-	float max = 0.0;
 	float simil;
-
+	* max_similarity = 0.0;
+	* closest_word_idx = -1;	//copiamos el nuevo indice	
+	//imprimir_vector_float(result_vector,EMB_SIZE);
 	for(i = 0; i<numwords;i++){
-		simil = cosine_similarity(result_vector,words[i*EMB_SIZE],EMB_SIZE);
-		if ( simil > max){
-			max=simil;
-			for(j=0;j<EMB_SIZE;j++)
-				result_vector[i]=(words[i*EMB_SIZE+j]);
+		simil = cosine_similarity(result_vector,&words[i*EMB_SIZE],EMB_SIZE);
+		if ( simil > * max_similarity && i != idx1 && i != idx2 && i != idx3){
+			* max_similarity=simil;	//copiamos el nuevo mas
+			for(j=0;j<EMB_SIZE;j++)	//copiamos el nuevo vector result_vector[i]=(words[i*EMB_SIZE+j]);
+			* closest_word_idx = i;	//copiamos el nuevo indice	
 		}
 	}
 	return;
@@ -86,5 +93,13 @@ void knn_complet(float *words, int numwords, float *similarities) {
 			similarities[i*numwords+j] = cosine_similarity(&words[i*EMB_SIZE], &words[j*EMB_SIZE], EMB_SIZE);
 		}
 	}
+}
+//-------------------
+// Debuging:
+//-------------------
+void imprimir_vector_float(float *vector, int tamano){
+	printf("\n");
+	for (int i = 0; i < EMB_SIZE; i++)	printf(" %2.3f",vector[i]);
+	printf("\n");
 }
 

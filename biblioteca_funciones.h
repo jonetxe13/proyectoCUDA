@@ -40,3 +40,7 @@ void find_closest_word(float *result_vector, float *words, int numwords, int idx
 
 // kNN para todas las palabras
 void knn_complet(float *words, int numwords, float *similarities);
+//-------------------
+// Debuging:
+//-------------------
+void imprimir_vector_float(float *vector, int tamano);
