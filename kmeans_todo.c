@@ -51,14 +51,14 @@ void update_centroids(float *words, float *centroids, int *wordcent, int numword
 
 	int i, j, cluster;
 
-	for (int i = 0; i < numclusters; i++) {
+	for (int i = 0; i < numclusters; i++) {//reseteo la info de los clusters
 		cluster_sizes[i]=0;
-		for (int j = 0; j < dim; j++) {
+		for (int j = 0; j < dim; j++) {//es esto necesario? porque?
 			centroids[i*dim+j] = 0.0; // Zentroideak berrasieratu -- Reinicia los centroides
 		}
 	}
-
-	for (i = 0; i < numwords; i++) {
+	//estos 2 fors hacen la media entre todos los elementos de un cluster para actualizar el valor del centroide
+	for (i = 0; i < numwords; i++) {//por cada palabra
 		cluster = wordcent[i];
 		cluster_sizes[cluster]++;
 		for (j = 0; j < dim; j++) {
@@ -89,45 +89,40 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 	int i,j,centroideFinal;
 	double minDist =DBL_MAX;
 	double dist;
-	for (i = 0; i < numwords; i++) {
-		for (j = 0; j < numclusters; j++) {
-			dist=word_distance (&words[i*dim],&centroids[j*dim]);
-			if ( dist < minDist){
+	for (i = 0; i < numwords; i++) {//por cada palabra...
+		for (j = 0; j < numclusters; j++) {// y por cada centroide
+			dist=word_distance (&words[i*dim],&centroids[j*dim]);//miro la distancia...
+			if ( dist < minDist){//y me quedo con el que este mas cerca
 				minDist=dist;	
 				centroideFinal=j;	
 			}
 		}
-		if(	wordcent[i]!=centroideFinal)
+		if(	wordcent[i]!=centroideFinal)//despues me quedo el mas cerca y lo guardo en wordcent
 		{
 			* changed = 1;
 			wordcent[i]=centroideFinal;
 		}
 		minDist =DBL_MAX;
 	}
-	//por cada palabra...
-	//por cada centroide...
-	//calcular distancia palabra-centroide
-	//si es menor que la ultima iteracion, actualizamos el ultimo mas pequeño
-	//asignamos el valor mas pequeño
 }
 
 double cluster_homogeneity(float *words, struct clusterinfo *members, int i, int numclusters, int number)
 {
 	/****************************************************************************************
 	  OSATZEKO - PARA COMPLETAR
-	  Kideen arteko distantzien batezbestekoa - Media de las distancias entre los elementos del cluster
-	  Cluster bakoitzean, hitz bikote guztien arteko distantziak - En cada cluster, las distancias entre todos los pares de elementos
-	  Adi, i-j neurtuta, ez da gero j-i neurtu behar  / Ojo, una vez calculado el par i-j no hay que calcular el j-i
+	  Media de las distancias entre los elementos del cluster
+	  En cada cluster, las distancias entre todos los pares de elementos
+	  Ojo, una vez calculado el par i-j no hay que calcular el j-i
 	 ****************************************************************************************/
 	int *resultados = calloc(members[i].number*members[i].number,sizeof(int));//matriz para que no se pisen los calculos
 	int k,j;
 	double adevolver= 0.0;
-	for(k;k<members[i].number;k++){
-		for(j;j<members[i].number;j++){
+	for(k=0;k<members[i].number;k++){//por cada palabra en el cluster...
+		for(j=0;j<members[i].number;j++){ //por cada palabra en el cluster
 			if(!resultados[k*members[i].number + j])//juraria que esto funciona, lo hago para no repetir
 			{	
 				resultados[j*members[i].number + k]+=1;//marcamos "el contrario", si hemos hecho distancia (k,j), marcamos para no hacer (j,k)
-				adevolver += word_distance (&words[members[i].elements[k]*EMB_SIZE],&words[members[i].elements[j]*EMB_SIZE]);
+				adevolver += word_distance(&words[members[i].elements[k]*EMB_SIZE],&words[members[i].elements[j]*EMB_SIZE]);
 			}
 		}
 	}
@@ -185,7 +180,7 @@ double validation (float *words, struct clusterinfo *members, float *centroids, 
 		cent_homog[i] = disbat / (numclusters-1);	// si son 5 clusters, se han sumado 4 dist.
 	}
 
-	//cambio no se si estará bien //tiene buena pinta
+	//cambio no se si estará bien 
 	cvi = 0;
 	for(int j = 0; j < numclusters; j++){
 		if(clust_homog[i]>cent_homog[i]){
@@ -290,14 +285,16 @@ int main(int argc, char *argv[])
 			  OSATZEKO - PARA COMPLETAR
 			  deitu k_means_calculate funtzioari -- llamar a la función k_means_calculate
 			 ****************************************************************************************/
+			k_means_calculate(words, numwords, EMB_SIZE, numclusters,wordcent,centroids,&changed) ;
 			if (changed==0) break; // Aldaketarik ez bada egon, atera -- Si no hay cambios, salir
+			//printf("borrame, pero ha habido cambios\n");
 			update_centroids(words, centroids, wordcent, numwords, numclusters, EMB_SIZE, cluster_sizes);
 		}  
 
 
 		// B. Sailkatzearen "kalitatea" -- "Calidad" del cluster
 		// =====================================================
-		printf("Kalitatea -- Calidad\n");   
+		//printf("Kalitatea -- Calidad\n");   
 		for (i=0; i<numclusters; i++)  members[i].number = 0;
 
 		// cluster bakoitzeko hitzak (osagaiak) eta kopurua -- palabras de cada clusters y cuantas son
@@ -314,6 +311,9 @@ int main(int argc, char *argv[])
 		  if (cvi appropriate) end classification;
 		  else  continue classification;	
 		 ****************************************************************************************/
+		cvi = validation (words, members, centroids ,numclusters );
+		printf("El indice de calidad en la iteracion con %i clusters es: %2.2f, \n",numclusters,cvi);   
+		numclusters+=10;
 	} 
 
 	clock_gettime (CLOCK_REALTIME, &t1);
