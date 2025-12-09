@@ -87,9 +87,11 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 	//NOTA DE MARCOS:
 	//no entiendo porque usar "dim" en vez de EMB_SIZE, a lo mejor no te he entendido algo, pero en todo el resto del proyecto se usa EMB_SIZE sin problema
 	int i,j,centroideFinal;
-	double minDist =DBL_MAX;
+	double minDist;
 	double dist;
 	for (i = 0; i < numwords; i++) {//por cada palabra...
+		minDist =DBL_MAX;
+		centroideFinal=wordcent[i];
 		for (j = 0; j < numclusters; j++) {// y por cada centroide
 			dist=word_distance (&words[i*dim],&centroids[j*dim]);//miro la distancia...
 			if ( dist < minDist){//y me quedo con el que este mas cerca
@@ -102,7 +104,6 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 			* changed = 1;
 			wordcent[i]=centroideFinal;
 		}
-		minDist =DBL_MAX;
 	}
 }
 
@@ -128,7 +129,7 @@ double cluster_homogeneity(float *words, struct clusterinfo *members, int i, int
 	}
 
 	free(resultados);
-	return adevolver/members[i].number;
+	return adevolver;
 }
 
 
@@ -145,7 +146,7 @@ double centroid_homogeneity(float *centroids, int i, int numclusters)
 	for(j = 0;j < numclusters ; j++){
 		distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
 	}
-	return distancia/numclusters;
+	return distancia;
 }
 
 
@@ -182,7 +183,7 @@ double validation (float *words, struct clusterinfo *members, float *centroids, 
 
 	//cambio no se si estará bien 
 	cvi = 0;
-	for(int j = 0; j < numclusters; j++){
+	for(i = 0; i < numclusters; i++){
 		if(clust_homog[i]>cent_homog[i]){
 			cvi += (clust_homog[i]-cent_homog[i])/clust_homog[i];
 		}
@@ -276,7 +277,8 @@ int main(int argc, char *argv[])
 	printf("K_means\n");
 	clock_gettime (CLOCK_REALTIME, &t0);
 
-	while (numclusters < NUMCLUSTERSMAX && end_classif == 0)
+	//while (numclusters < NUMCLUSTERSMAX && end_classif == 0)
+	while (numclusters < 31  && end_classif == 0)
 	{
 		initialize_centroids(words, centroids, numwords, numclusters, EMB_SIZE);
 		for (iter = 0; iter < MAX_ITER; iter++) {
@@ -318,9 +320,12 @@ int main(int argc, char *argv[])
 
 	clock_gettime (CLOCK_REALTIME, &t1);
 	/******************************************************************/
-
-	for (i=0; i<numclusters; i++)
+	int auxi=0;
+	for (i=0; i<numclusters; i++){
 		printf ("%d. cluster, %d words \n", i, cluster_sizes[i]);
+		auxi += cluster_sizes[i];
+	}
+		printf ("Num palabras total:%i\n", auxi);
 
 	tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
 	printf("\n Tej. (serie) = %1.3f ms\n\n", tej*1000);
