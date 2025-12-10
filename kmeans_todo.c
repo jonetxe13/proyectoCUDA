@@ -53,7 +53,7 @@ void update_centroids(float *words, float *centroids, int *wordcent, int numword
 
 	for (int i = 0; i < numclusters; i++) {//reseteo la info de los clusters
 		cluster_sizes[i]=0;
-		for (int j = 0; j < dim; j++) {//es esto necesario? porque?
+		for (int j = 0; j < dim; j++) {
 			centroids[i*dim+j] = 0.0; // Zentroideak berrasieratu -- Reinicia los centroides
 		}
 	}
@@ -83,15 +83,12 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 	  - Hitz bakoitzari cluster gertukoena esleitu cosine_similarity funtzioan oinarrituta
 	  - Asignar cada palabra al cluster más cercano basandose en la función cosine_similarity       
 	 ****************************************************************************************/
-
-	//NOTA DE MARCOS:
-	//no entiendo porque usar "dim" en vez de EMB_SIZE, a lo mejor no te he entendido algo, pero en todo el resto del proyecto se usa EMB_SIZE sin problema
 	int i,j,centroideFinal;
 	double minDist;
 	double dist;
 	for (i = 0; i < numwords; i++) {//por cada palabra...
 		minDist =DBL_MAX;
-		centroideFinal=wordcent[i];
+		centroideFinal=wordcent[i];//asignamos la palabra anterior
 		for (j = 0; j < numclusters; j++) {// y por cada centroide
 			dist=word_distance (&words[i*dim],&centroids[j*dim]);//miro la distancia...
 			if ( dist < minDist){//y me quedo con el que este mas cerca
@@ -120,10 +117,12 @@ double cluster_homogeneity(float *words, struct clusterinfo *members, int i, int
 	double adevolver= 0.0;
 	for(k=0;k<members[i].number;k++){//por cada palabra en el cluster...
 		for(j=0;j<members[i].number;j++){ //por cada palabra en el cluster
-			if(!resultados[k*members[i].number + j])//juraria que esto funciona, lo hago para no repetir
+			if(!resultados[k*members[i].number + j]&& j!=k)//juraria que esto funciona, lo hago para no repetir
 			{	
 				resultados[j*members[i].number + k]+=1;//marcamos "el contrario", si hemos hecho distancia (k,j), marcamos para no hacer (j,k)
-				adevolver += word_distance(&words[members[i].elements[k]*EMB_SIZE],&words[members[i].elements[j]*EMB_SIZE]);
+				adevolver += word_distance(
+						&words[members[i].elements[k]*EMB_SIZE],
+						&words[members[i].elements[j]*EMB_SIZE]);
 			}
 		}
 	}
@@ -144,7 +143,7 @@ double centroid_homogeneity(float *centroids, int i, int numclusters)
 	int j; 
 	double distancia = 0.0;
 	for(j = 0;j < numclusters ; j++){
-		distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
+	if(i!=j)	distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
 	}
 	return distancia;
 }
@@ -280,6 +279,9 @@ int main(int argc, char *argv[])
 	//while (numclusters < NUMCLUSTERSMAX && end_classif == 0)
 	while (numclusters < 31  && end_classif == 0)
 	{
+		for (i = 0; i < numwords; i++) {
+			wordcent[i] =-1;
+		}
 		initialize_centroids(words, centroids, numwords, numclusters, EMB_SIZE);
 		for (iter = 0; iter < MAX_ITER; iter++) {
 			changed = 0;
@@ -314,8 +316,9 @@ int main(int argc, char *argv[])
 		  else  continue classification;	
 		 ****************************************************************************************/
 		cvi = validation (words, members, centroids ,numclusters );
-		printf("El indice de calidad en la iteracion con %i clusters es: %2.2f, \n",numclusters,cvi);   
+		printf("El indice de calidad en la iteracion con %i clusters es: %1.6f, \n",numclusters,cvi);   
 		numclusters+=10;
+		//numclusters++;
 	} 
 
 	clock_gettime (CLOCK_REALTIME, &t1);
@@ -325,7 +328,7 @@ int main(int argc, char *argv[])
 		printf ("%d. cluster, %d words \n", i, cluster_sizes[i]);
 		auxi += cluster_sizes[i];
 	}
-		printf ("Num palabras total:%i\n", auxi);
+	printf ("Num palabras total:%i\n", auxi);
 
 	tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
 	printf("\n Tej. (serie) = %1.3f ms\n\n", tej*1000);
@@ -347,6 +350,7 @@ int main(int argc, char *argv[])
 
 	free(words);
 	for (i=0; i<numwords;i++) free (hiztegia[i]);
+	free(wordcent);
 	free(hiztegia); 
 	free(cluster_sizes);
 	free(centroids);
