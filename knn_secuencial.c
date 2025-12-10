@@ -47,7 +47,8 @@ int main(int argc, char *argv[])
 	 ******************************************************************/
 
 	words = (float *)malloc(numwords*EMB_SIZE*sizeof(float));
-	similarities = (float *)malloc(numwords*numwords*EMB_SIZE*sizeof(float));
+	/imilarities = (float *)malloc(numwords*numwords*EMB_SIZE*sizeof(float));
+	//similarities = (float *)malloc(numwords*numwords*sizeof(float));
 
 	for (i=0; i<numwords; i++) {
 		for (j=0; j<EMB_SIZE; j++) {

@@ -86,15 +86,15 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	printf("se han encontrado correctamente las 3 palabras en el diccionario");
-	clock_gettime (CLOCK_REALTIME, &t0);
 
+	clock_gettime (CLOCK_REALTIME, &t0);
 	/***************************************************/  
 	//operamos los vectores de las respectivas palabras para obtener el vector de la palabra que mas se pareceria
-	clock_gettime (CLOCK_REALTIME, &t1);   
 	perform_analogy(words,idx1,idx2,idx3,result_vector);
 	//printf("el resultado de la analolgia de vectores es: %f,%f,%f...\n",result_vector[0],result_vector[1],result_vector[2]);
 	find_closest_word(result_vector,words,numwords,idx1,idx2,idx3,&closest_word_idx,&max_similarity);
 
+	clock_gettime (CLOCK_REALTIME, &t1);   
 	if (closest_word_idx != -1) {
 		printf("\nClosest_word: %s (%d), sim = %f \n", dictionary[closest_word_idx],closest_word_idx, max_similarity);
 	} else printf("No close word found.\n");
