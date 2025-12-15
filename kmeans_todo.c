@@ -143,7 +143,8 @@ double centroid_homogeneity(float *centroids, int i, int numclusters)
 	int j; 
 	double distancia = 0.0;
 	for(j = 0;j < numclusters ; j++){
-	if(i!=j)	distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
+		if(i!=j)	
+			distancia += word_distance (&centroids[i*EMB_SIZE],&centroids[j*EMB_SIZE]);
 	}
 	return distancia;
 }
@@ -205,7 +206,7 @@ int main(int argc, char *argv[])
 {
 	int		i, j, numwords, k, iter, changed, end_classif;
 	int		cluster, zenb, numclusters = 20;
-	double  	cvi, cvi_zaharra, dif;
+	double  	cvi, cvi_old, dif;
 	float 	*words;
 	FILE    	*f1, *f2, *f3;
 	char 	**hiztegia;  
@@ -263,7 +264,7 @@ int main(int argc, char *argv[])
 
 	k = NUMCLUSTERSMAX;   // hasierako kluster kopurua (20) -- numero de clusters inicial
 	end_classif = 0; 
-	cvi_zaharra = -1;
+	cvi_old= -1;
 
 	float *centroids = (float *)malloc(k * EMB_SIZE * sizeof(float));
 	int *cluster_sizes = (int *)calloc(k, sizeof(int));
@@ -283,6 +284,7 @@ int main(int argc, char *argv[])
 			wordcent[i] =-1;
 		}
 		initialize_centroids(words, centroids, numwords, numclusters, EMB_SIZE);
+		cvi_old=-1;
 		for (iter = 0; iter < MAX_ITER; iter++) {
 			changed = 0;
 			/****************************************************************************************
@@ -317,8 +319,10 @@ int main(int argc, char *argv[])
 		 ****************************************************************************************/
 		cvi = validation (words, members, centroids ,numclusters );
 		printf("El indice de calidad en la iteracion con %i clusters es: %1.6f, \n",numclusters,cvi);   
-		numclusters+=10;
-		//numclusters++;
+		if(cvi-cvi_old<DELTA) end_classif =1;
+		cvi_old=cvi;
+		//numclusters+=10;
+		numclusters++;
 	} 
 
 	clock_gettime (CLOCK_REALTIME, &t1);

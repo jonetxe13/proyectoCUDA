@@ -88,8 +88,8 @@ void find_closest_word(float *result_vector, float *words, int numwords, int idx
 
 void knn_complet(float *words, int numwords, float *similarities) {
 	int i,j;
-	for(int i = 0; i < numwords; i++){
-		for(int j = 0; j < numwords; j++){
+	for(i = 0; i < numwords; i++){
+		for(j = 0; j < numwords; j++){
 			similarities[i*numwords+j] = cosine_similarity(&words[i*EMB_SIZE], &words[j*EMB_SIZE], EMB_SIZE);
 		}
 	}
