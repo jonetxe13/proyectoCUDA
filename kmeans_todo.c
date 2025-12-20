@@ -8,6 +8,7 @@
 #include <time.h>
 #include <float.h>
 #include "biblioteca_funciones.h" 
+
 struct clusterinfo	 // clusterrei buruzko informazioa -- informacion de los clusters
 {
 	int  elements[VOCAB_SIZE]; 	// osagaiak -- elementos
@@ -84,15 +85,16 @@ void k_means_calculate(float *words, int numwords, int dim, int numclusters, int
 	  - Asignar cada palabra al cluster más cercano basandose en la función cosine_similarity       
 	 ****************************************************************************************/
 	int i,j,centroideFinal;
-	double minDist;
+	double maxDist;
 	double dist;
 	for (i = 0; i < numwords; i++) {//por cada palabra...
-		minDist =DBL_MAX;
+		maxDist = -DBL_MAX;
 		centroideFinal=wordcent[i];//asignamos la palabra anterior
 		for (j = 0; j < numclusters; j++) {// y por cada centroide
-			dist=word_distance (&words[i*dim],&centroids[j*dim]);//miro la distancia...
-			if ( dist < minDist){//y me quedo con el que este mas cerca
-				minDist=dist;	
+			// dist=word_distance (&words[i*dim],&centroids[j*dim]);//miro la distancia...
+			dist=cosine_similarity(&words[i*dim],&centroids[j*dim], dim);
+			if ( dist > maxDist){//y me quedo con el que este mas cerca
+				maxDist=dist;	
 				centroideFinal=j;	
 			}
 		}
@@ -185,10 +187,10 @@ double validation (float *words, struct clusterinfo *members, float *centroids, 
 	cvi = 0;
 	for(i = 0; i < numclusters; i++){
 		if(clust_homog[i]>cent_homog[i]){
-			cvi += (clust_homog[i]-cent_homog[i])/clust_homog[i];
+			cvi += (cent_homog[i]-clust_homog[i])/clust_homog[i];
 		}
 		else {
-			cvi += (clust_homog[i]-cent_homog[i])/cent_homog[i];
+			cvi += (cent_homog[i]-clust_homog[i])/cent_homog[i];
 		}
 	}
 	cvi = cvi/numclusters;
@@ -320,9 +322,9 @@ int main(int argc, char *argv[])
 		cvi = validation (words, members, centroids ,numclusters );
 		printf("El indice de calidad en la iteracion con %i clusters es: %1.6f, \n",numclusters,cvi);   
 		if(cvi-cvi_old<DELTA) end_classif =1;
-		cvi_old=cvi;
-		//numclusters+=10;
-		numclusters++;
+		else numclusters+=10;
+		// cvi_old=cvi;
+		// numclusters++;
 	} 
 
 	clock_gettime (CLOCK_REALTIME, &t1);
