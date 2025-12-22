@@ -8,3 +8,4 @@ gcc -O2 biblioteca_funciones_secuencial.c knn_secuencial.c -o knn_secuencial.out
 ./kmeans_secuencial.out ~/PAR/proyecto/embeddings.dat ~/PAR/proyecto/dictionary.dat ./micluster.dat
 ### kmeans
 gcc kmeans_todo.c -o kmeans -lm -O2
+./kmeans embeddings.dat dictionary.dat micluster.dat 1000
