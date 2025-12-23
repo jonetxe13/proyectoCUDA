@@ -280,13 +280,12 @@ int main(int argc, char *argv[])
 	clock_gettime (CLOCK_REALTIME, &t0);
 
 	//while (numclusters < NUMCLUSTERSMAX && end_classif == 0)
-	while (numclusters < 31  && end_classif == 0)
+	while (numclusters < NUMCLUSTERSMAX  && end_classif == 0)
 	{
 		for (i = 0; i < numwords; i++) {
 			wordcent[i] =-1;
 		}
 		initialize_centroids(words, centroids, numwords, numclusters, EMB_SIZE);
-		cvi_old=-1;
 		for (iter = 0; iter < MAX_ITER; iter++) {
 			changed = 0;
 			/****************************************************************************************
@@ -323,12 +322,13 @@ int main(int argc, char *argv[])
 		printf("El indice de calidad en la iteracion con %i clusters es: %1.6f, \n",numclusters,cvi);   
 		if(cvi-cvi_old<DELTA) end_classif =1;
 		else numclusters+=10;
-		// cvi_old=cvi;
-		// numclusters++;
+		cvi_old=cvi;
 	} 
 
 	clock_gettime (CLOCK_REALTIME, &t1);
 	/******************************************************************/
+	printf("DEBUG numclusters=%d\n", numclusters);
+
 	int auxi=0;
 	for (i=0; i<numclusters; i++){
 		printf ("%d. cluster, %d words \n", i, cluster_sizes[i]);
