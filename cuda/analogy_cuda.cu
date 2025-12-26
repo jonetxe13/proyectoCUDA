@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
 	struct timespec  t0, t1;
 	double tej;
 
+	//para la version de cuda:
+	int 	numBloques,numHilos;
 
 	if (argc < 3) {
 		printf("Deia: analogia embedding_fitx hiztegi_fitx\n");
@@ -48,7 +50,11 @@ int main(int argc, char *argv[])
 
 	fscanf (f1, "%d", &numwords);	       // prozesatu behar den hitz kopurua fitxategitik jaso
 	if (argc == 4) numwords = atoi (argv[3]);   // 3. parametroa = prozesatu behar diren hitzen kopurua  
-	printf ("numwords = %d\n", numwords);
+	if (argc == 5) numBloques= atoi (argv[4]);
+	else numBloques = 4;
+	if (argc == 6) numHilos= atoi (argv[5]);
+	else numHilos= 1024;
+	printf ("numWords = %d\nnumBloques= %d\nnumHilos= %d\n", numwords,numBloques,numHilos);
 
 	words = (float*)malloc (numwords*EMB_SIZE*sizeof(float));
 	dictionary = (char**)malloc (numwords*sizeof(char*));
@@ -88,11 +94,9 @@ int main(int argc, char *argv[])
 	printf("se han encontrado correctamente las 3 palabras en el diccionario");
 
 	clock_gettime (CLOCK_REALTIME, &t0);
-	/***************************************************/  
-	//operamos los vectores de las respectivas palabras para obtener el vector de la palabra que mas se pareceria
 	perform_analogy(words,idx1,idx2,idx3,result_vector);
-	//printf("el resultado de la analolgia de vectores es: %f,%f,%f...\n",result_vector[0],result_vector[1],result_vector[2]);
-	find_closest_word(result_vector,words,numwords,idx1,idx2,idx3,&closest_word_idx,&max_similarity);
+
+	find_closest_word(result_vector,words,numwords,idx1,idx2,idx3,&closest_word_idx,&max_similarity,numBloques,numHilos);
 
 	clock_gettime (CLOCK_REALTIME, &t1);   
 	if (closest_word_idx != -1) {

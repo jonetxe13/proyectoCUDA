@@ -31,7 +31,7 @@ int word2ind(char* word, char** dictionary, int numwords);
 void perform_analogy(float *words, int idx1, int idx2, int idx3, float *result_vector);
 
 // Función para encontrar la palabra más cercana al vector resultante
-void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity);
+void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity, int numBloques, int numHilos);
 
 
 //-------------------
