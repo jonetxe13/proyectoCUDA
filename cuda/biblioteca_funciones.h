@@ -34,6 +34,8 @@ void perform_analogy(float *words, int idx1, int idx2, int idx3, float *result_v
 void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity, int numBloques, int numHilos);
 
 
+__global__ void reduc_analogy(int idx1,int idx2,int idx3,int numWords,int * indicesBloques, int * maximosBloques,float * words,float * result_vector);
+
 //-------------------
 // KNN:
 //-------------------
