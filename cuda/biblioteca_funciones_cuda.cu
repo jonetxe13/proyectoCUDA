@@ -1,5 +1,4 @@
 #include "biblioteca_funciones.h"
-#include <cuda_device_runtime_api.h>
 #include <driver_types.h>
 #include <math.h>
 #include <stdio.h>
@@ -162,25 +161,35 @@ void perform_analogy(float *words, int idx1, int idx2, int idx3,
 // KNN:
 //-------------------
 
-__global__ void knn_cuda(float *words, int *numwords, float *similarities) {
+__global__ void precalculate_norms(float *words, float *norms, int numwords) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < numwords) {
+    norms[idx] = magnitude(&words[idx * EMB_SIZE], EMB_SIZE);
+  }
+}
+
+__global__ void knn_cuda(float *words, int numwords, float *similarities,
+                         float *norms) {
   int tid = threadIdx.x;
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int stride = blockDim.x * gridDim.x;
   int i, j;
-  int nwords = *numwords;
+  int nwords = numwords;
+  float norm_i;
 
   for (i = idx; i < nwords; i += stride) {
+    norm_i = norms[i];
     for (j = 0; j < nwords; j++) {
-      similarities[i * nwords + j] = cosine_similarity(
-          &words[i * EMB_SIZE], &words[j * EMB_SIZE], EMB_SIZE);
+      float dot =
+          dot_product(&words[i * EMB_SIZE], &words[j * EMB_SIZE], EMB_SIZE);
+      similarities[i * nwords + j] = dot / (norm_i * norms[j]);
     }
   }
 }
 
 void knn_complet(float *words, int numwords, float *similarities) {
-  float *wordsCuda, *similaritiesCuda;
-  int *numwordsCuda;
-  int numBloques = 4, numHilos = 1024;
+  float *wordsCuda, *similaritiesCuda, *normsCuda;
+  int numBloques = (numwords + 255) / 256, tamBloques = 256;
 
   float Tex;
   cudaEvent_t t0, t1;
@@ -189,16 +198,22 @@ void knn_complet(float *words, int numwords, float *similarities) {
   cudaMemcpy(wordsCuda, words, numwords * EMB_SIZE * sizeof(float),
              cudaMemcpyHostToDevice);
   cudaMalloc(&similaritiesCuda, numwords * numwords * sizeof(float));
-  cudaMemcpy(similaritiesCuda, similarities,
-             numwords * numwords * sizeof(float), cudaMemcpyHostToDevice);
-  cudaMalloc(&numwordsCuda, sizeof(int));
-  cudaMemcpy(numwordsCuda, &numwords, sizeof(int), cudaMemcpyHostToDevice);
+
+  cudaMalloc(&normsCuda, numwords * sizeof(float));
+
+  precalculate_norms<<<numBloques, tamBloques>>>(wordsCuda, normsCuda,
+                                                 numwords);
+  cudaDeviceSynchronize();
+
+  // cudaMalloc(&numwordsCuda, sizeof(int));
+  // cudaMemcpy(numwordsCuda, &numwords, sizeof(int), cudaMemcpyHostToDevice);
 
   cudaEventCreate(&t0); // crear objeto
   cudaEventCreate(&t1);
   cudaEventRecord(t0); // tiempo en t
 
-  knn_cuda<<<numBloques, numHilos>>>(wordsCuda, numwordsCuda, similaritiesCuda);
+  knn_cuda<<<numBloques, tamBloques>>>(wordsCuda, numwords, similaritiesCuda,
+                                       normsCuda);
 
   cudaEventRecord(t1);      // tiempo en t1
   cudaEventSynchronize(t1); // esperar hasta que
@@ -215,7 +230,7 @@ void knn_complet(float *words, int numwords, float *similarities) {
              numwords * numwords * sizeof(float), cudaMemcpyDeviceToHost);
   cudaFree(wordsCuda);
   cudaFree(similaritiesCuda);
-  cudaFree(numwordsCuda);
+  cudaFree(normsCuda);
 }
 
 //-------------------
