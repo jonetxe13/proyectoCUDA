@@ -5,20 +5,21 @@
 #define K       20      // kluster kopurua -- numero de clusters
 #define DELTA       0.5     // konbergentzia (cvi) -- convergencia (cvi)
 #define NUMCLUSTERSMAX 100  // cluster kopuru maximoa -- numero máximo de clusters
+#define MAX_THREADS_PER_BLOCK 1024
 
 //-------------------
 // COMPARTIDAS:
 //-------------------
 
 // Función para calcular el producto escalar entre dos vectores
-double dot_product(float* a, float* b, int size);
+__device__ double dot_product(float* a, float* b, int size);
 
 // Función para calcular la norma (magnitud) de un vector
-float magnitude(float* vec, int size);
+__device__ float magnitude(float* vec, int size);
 
 // Función para calcular la similitud coseno entre dos vectores
 //
-float cosine_similarity(float* vec1, float* vec2, int size);
+__device__ float cosine_similarity(float* vec1, float* vec2, int size);
 
 //-------------------
 // Analogy:
@@ -34,7 +35,7 @@ void perform_analogy(float *words, int idx1, int idx2, int idx3, float *result_v
 void find_closest_word(float *result_vector, float *words, int numwords, int idx1, int idx2, int idx3, int *closest_word_idx, float *max_similarity, int numBloques, int numHilos);
 
 
-__global__ void reduc_analogy(int idx1,int idx2,int idx3,int numWords,int * indicesBloques, int * maximosBloques,float * words,float * result_vector);
+__global__ void reduc_analogy(int idx1,int idx2,int idx3,int numWords,int * indicesBloques, float * maximosBloques,float * words,float * result_vector);
 
 //-------------------
 // KNN:
