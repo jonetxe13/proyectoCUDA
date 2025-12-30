@@ -8,5 +8,5 @@ los 2 ultimos parametros son el numero de bloques y el numero de hilos por bloqu
 gcc -O2 biblioteca_funciones_secuencial.c knn_secuencial.c -o knn_secuencial.out -lm
 ./kmeans_secuencial.out ~/PAR/proyecto/embeddings.dat ~/PAR/proyecto/dictionary.dat ./micluster.dat
 ### kmeans
-gcc kmeans_todo.c -o kmeans -lm -O2
-./kmeans embeddings.dat dictionary.dat micluster.dat 1000
+nvcc -rdc=true kmeans_cuda.cu biblioteca_funciones_cuda.cu -o knn.out
+/knn.out ../secuencial/embeddings.dat ../secuencial/dictionary.dat micluster.dat 1000
