@@ -86,7 +86,7 @@ __global__ void k_means_calculate(float *words, int numWords, int dim,
 	{
 	int i, j, centroideFinal,localChanged;
 	double maxDist;
-	double dist;
+	float dist;
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
 	localChanged=0;
@@ -109,7 +109,8 @@ __global__ void k_means_calculate(float *words, int numWords, int dim,
 			wordcent[i] = centroideFinal;
 		}
 	}
-if(localChanged)atomicAdd(changed,1);
+	if(localChanged)
+		atomicExch(changed, 1);
 }
 
 double cluster_homogeneity(float *words, struct clusterinfo *members, int i,
@@ -233,8 +234,7 @@ int main(int argc, char *argv[]) {
 
 
 	if (argc < 4) {
-		printf("\nCall: kmeans embeddings.dat dictionary.dat myclusters.dat "
-				"[nhilos],[nbloques][numwords]\n\n");
+		printf("\nCall: kmeans embeddings.dat dictionary.dat myclusters.dat [numwords][nhilos],[nbloques]\n\n");
 		printf("\t(in) embeddings.dat and dictionary.dat\n");
 		printf("\t(out) myclusters.dat\n");
 		printf("\t(nhilos optional) ");
@@ -261,21 +261,20 @@ int main(int argc, char *argv[]) {
 				argv[2]);
 		exit(-1);
 	}
-
 	fscanf(f1, "%d", &numwords);
 	if (argc == 5)
-		numBloques = atoi(argv[4]);
+		numwords = atoi(argv[4]);
+	printf("numwords = %d\n", numwords);
+
+	if (argc == 6)
+		numBloques = atoi(argv[5]);
 	else
 		numBloques = 4;
-	if (argc == 6)
-		numHilos = atoi(argv[5]);
+	if (argc == 7)
+		numHilos = atoi(argv[6]);
 	else
 		numHilos = 1024;
-	printf("numWords = %d\nnumBloques= %d\nnumHilos= %d\n", numwords, numBloques,
-			numHilos);
-	if (argc == 7)
-		numwords = atoi(argv[6]);
-	printf("numwords = %d\n", numwords);
+	printf("numWords = %d\nnumBloques= %d\nnumHilos= %d\n", numwords, numBloques,numHilos);
 
 	words = (float *)malloc(numwords * EMB_SIZE * sizeof(float));
 	cudaMalloc(&cu_words,numwords * EMB_SIZE * sizeof(float));
@@ -290,6 +289,8 @@ int main(int argc, char *argv[]) {
 			fscanf(f1, "%f", &(words[i * EMB_SIZE + j]));
 		}
 	}
+	//pasamos esto a 
+	cudaMemcpy(cu_words, words, numwords * EMB_SIZE * sizeof(float),cudaMemcpyHostToDevice);
 	printf("Embeddingak eta hiztegia irakurrita -- Embeddings y dicionario "
 			"leidos\n");
 
@@ -298,14 +299,13 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < numwords; i++)
 		wordcent[i] = -1;
 
-	k = NUMCLUSTERSMAX; // hasierako kluster kopurua (20) -- numero de clusters
 	// inicial
 	end_classif = 0;
 	cvi_old = -1;
 
-	float *centroids = (float *)malloc(k * EMB_SIZE * sizeof(float));
-	cudaMalloc(&cu_centroids,k * EMB_SIZE * sizeof(float));
-	int *cluster_sizes = (int *)calloc(k, sizeof(int));
+	float *centroids = (float *)malloc(NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
+	cudaMalloc(&cu_centroids,NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
+	int *cluster_sizes = (int *)calloc(NUMCLUSTERSMAX, sizeof(int));
 
 	/******************************************************************/
 	// A. kmeans kalkulatu -- Calcular kmeans
@@ -326,24 +326,23 @@ int main(int argc, char *argv[]) {
 			//numcluster a palo
 			//EMB_SIZE a palo
 
-			//words (embedigds de las palabras)con cuda
-			cudaMemcpy(cu_words, words, numwords * EMB_SIZE * sizeof(float),cudaMemcpyHostToDevice);
+			cudaMemcpy(cu_changed, &changed,sizeof(int),cudaMemcpyHostToDevice);
 			//worcent (vector con cada centroide por cada palabra) con cuda
 			cudaMemcpy(cu_wordcent,wordcent,numwords * sizeof(int),cudaMemcpyHostToDevice);
 			//centroids(embedings de los centroides)
-			cudaMemcpy(cu_centroids, words,k * EMB_SIZE * sizeof(float),cudaMemcpyHostToDevice);
+			cudaMemcpy(cu_centroids, centroids,numclusters * EMB_SIZE * sizeof(float),cudaMemcpyHostToDevice);
 			k_means_calculate<<<numBloques, numHilos>>> (cu_words, numwords, EMB_SIZE, numclusters, cu_wordcent,cu_centroids, cu_changed);
-			//trarse cu_changed, quizas solo ese
+			cudaDeviceSynchronize();
 			cudaMemcpy(&changed,cu_changed, sizeof(int),cudaMemcpyDeviceToHost);
 			//todo
-			cudaMemcpy(words,cu_words, numwords * EMB_SIZE * sizeof(float),cudaMemcpyDeviceToHost);
-			cudaMemcpy(wordcent,cu_wordcent,numwords * sizeof(int),cudaMemcpyDeviceToHost);
-			cudaMemcpy(centroids,cu_words,k * EMB_SIZE * sizeof(float),cudaMemcpyDeviceToHost);
+			cudaMemcpy(wordcent,cu_wordcent,numwords * sizeof(int),cudaMemcpyDeviceToHost);// esto hara falta
+			cudaDeviceSynchronize();
 			if (changed == 0)
 				break; // Aldaketarik ez bada egon, atera -- Si no hay cambios, salir
 			// printf("borrame, pero ha habido cambios\n");
-			update_centroids(words, centroids, wordcent, numwords, numclusters,
-					EMB_SIZE, cluster_sizes);
+			update_centroids(words, centroids, wordcent, numwords, numclusters,EMB_SIZE, cluster_sizes);
+			//cudaMemcpy(centroids,cu_centroids,NUMCLUSTERSMAX * EMB_SIZE * sizeof(float),cudaMemcpyDeviceToHost);
+
 		}
 
 		// B. Sailkatzearen "kalitatea" -- "Calidad" del cluster
