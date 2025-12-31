@@ -42,17 +42,18 @@ int main(int argc, char *argv[]) {
     printf("Errorea %s fitxategia irekitzean\n", argv[2]);
     exit(-1);
   }
+  printf("½½½½½%i½½½½½½\n",argc);
 
   fscanf(f1, "%d",
          &numwords); // prozesatu behar den hitz kopurua fitxategitik jaso
-  if (argc == 4)
+  if (argc >  3)
     numwords =
         atoi(argv[3]); // 3. parametroa = prozesatu behar diren hitzen kopurua
-  if (argc == 5)
+  if (argc > 4)
     numBloques = atoi(argv[4]);
   else
     numBloques = 4;
-  if (argc == 6)
+  if (argc >  5)
     numHilos = atoi(argv[5]);
   else
     numHilos = 1024;
