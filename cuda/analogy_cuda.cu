@@ -20,9 +20,6 @@ int main(int argc, char *argv[]) {
   float *result_vector;
   float *sim_cosine;
 
-  struct timespec t0, t1;
-  double tej;
-
   // para la version de cuda:
   int numBloques, numHilos;
 
@@ -116,9 +113,6 @@ int main(int argc, char *argv[]) {
            closest_word_idx, max_similarity);
   } else
     printf("No close word found.\n");
-
-  tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
-  printf("\n Tej. (serie) = %1.3f ms\n\n", tej * 1000);
 
   fclose(f1);
   fclose(f2);

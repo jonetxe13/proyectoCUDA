@@ -97,14 +97,7 @@ void find_closest_word(float *result_vector, float *words, int numWords,
   reduc_analogy<<<numBloques, numHilos>>>(idx1, idx2, idx3, numWords, cu_ind,
                                           cu_max, cu_words, cu_vector_res);
 
-  cudaEventRecord(t1);      // tiempo en t1
-  cudaEventSynchronize(t1); // esperar hasta que
-  // t1 esté listo
-  cudaEventElapsedTime(&Tex, t0, t1); // calcula el tiempo
-  // entre t0 y t1
-  printf(" Tex (kernela): %fms\n", Tex); // milisegundos
-  cudaEventDestroy(t0);                  // borrar objeto
-  cudaEventDestroy(t1);
+
   // traerse los resultados del kernel:
   cudaMemcpy(maxBloques, cu_max, numBloques * sizeof(float),
              cudaMemcpyDeviceToHost);
@@ -117,7 +110,14 @@ void find_closest_word(float *result_vector, float *words, int numWords,
       *closest_word_idx = indices[i];
     }
   }
-
+  cudaEventRecord(t1);      // tiempo en t1
+  cudaEventSynchronize(t1); // esperar hasta que
+  // t1 esté listo
+  cudaEventElapsedTime(&Tex, t0, t1); // calcula el tiempo
+  // entre t0 y t1
+  printf(" Tex (kernela): %fms\n", Tex); // milisegundos
+  cudaEventDestroy(t0);                  // borrar objeto
+  cudaEventDestroy(t1);
   // TODO algun free mas?
   free(maxBloques);
   free(indices);
