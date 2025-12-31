@@ -102,11 +102,11 @@ __global__ void update_centroids(float *words, float *centroids, int *wordcent,
   //falta sincronizar???
   //###########
 
-  if (idx < numclusters) { // no hace falta ni hacer un bucle porque cabe
-    if (cluster_sizes[idx] > 0) {
+  for (i = idx; i < numclusters; i += stride) { // por cada palabra
+    if (cluster_sizes[i] > 0) {
       for (j = 0; j < dim; j++) {
-        centroids[idx * dim + j] =
-            centroids[idx * dim + j] / cluster_sizes[idx];
+        centroids[i * dim + j] =
+            centroids[i * dim + j] / cluster_sizes[i];
       }
     }
   }
