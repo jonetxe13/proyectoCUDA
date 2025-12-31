@@ -80,7 +80,7 @@ void initialize_centroids(float *words, float *centroids, int n,
 //   }
 // }
 
-__global__ void update_centroids(float *words, float *centroids, int *wordcent,
+__global__ void update_centroids_p1(float *words, float *centroids, int *wordcent,
                                  int numwords, int numclusters, int dim,
                                  int *cluster_sizes) {
 
@@ -98,10 +98,17 @@ __global__ void update_centroids(float *words, float *centroids, int *wordcent,
       // centroids[cluster * dim + j] += words[i * dim + j];
     }
   }
+}
   //###########
   //falta sincronizar???
   //###########
 
+__global__ void update_centroids_p2(float *words, float *centroids, int *wordcent,
+                                 int numwords, int numclusters, int dim,
+                                 int *cluster_sizes) {
+	int i,j;
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
   for (i = idx; i < numclusters; i += stride) { // por cada palabra
     if (cluster_sizes[i] > 0) {
       for (j = 0; j < dim; j++) {
@@ -386,10 +393,13 @@ int main(int argc, char *argv[]) {
       // printf("borrame, pero ha habido cambios\n");
 	  cudaMemset(cu_cluster_sizes,0,numclusters*sizeof(int));
 	  cudaMemset(cu_centroids,0,NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
-      update_centroids<<<numBloques, numHilos>>>(
+      update_centroids_p1<<<numBloques, numHilos>>>(
           cu_words, cu_centroids, cu_wordcent, numwords, numclusters, EMB_SIZE,
           cu_cluster_sizes);
       cudaDeviceSynchronize();
+      update_centroids_p2<<<numBloques, numHilos>>>(
+          cu_words, cu_centroids, cu_wordcent, numwords, numclusters, EMB_SIZE,
+          cu_cluster_sizes);
       cudaMemcpy(cluster_sizes, cu_cluster_sizes, NUMCLUSTERSMAX * sizeof(int),
                  cudaMemcpyDeviceToHost);
       cudaMemcpy(centroids, cu_centroids, numclusters * EMB_SIZE * sizeof(float),
