@@ -88,15 +88,6 @@ __global__ void update_centroids(float *words, float *centroids, int *wordcent,
   int stride = blockDim.x * gridDim.x;
   int i, j, cluster;
 
-  // for (int i = idx; i < numclusters;
-  //      i += stride) { // reseteo la info de los clusters
-  if (idx < numclusters) { // no hace falta ni hacer un bucle porque cabe
-    cluster_sizes[idx] = 0;
-    for (int j = 0; j < dim; j++) {
-      centroids[idx * dim + j] =
-          0.0; // Zentroideak berrasieratu -- Reinicia los centroides
-    }
-  }
   // estos 2 fors hacen la media entre todos los elementos de un cluster para
   // actualizar el valor del centroide
   for (i = idx; i < numwords; i += stride) { // por cada palabra
@@ -107,6 +98,9 @@ __global__ void update_centroids(float *words, float *centroids, int *wordcent,
       // centroids[cluster * dim + j] += words[i * dim + j];
     }
   }
+  //###########
+  //falta sincronizar???
+  //###########
 
   if (idx < numclusters) { // no hace falta ni hacer un bucle porque cabe
     if (cluster_sizes[idx] > 0) {
@@ -349,7 +343,7 @@ int main(int argc, char *argv[]) {
   float *centroids = (float *)malloc(NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
   cudaMalloc(&cu_centroids, NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
   int *cluster_sizes = (int *)calloc(NUMCLUSTERSMAX, sizeof(int));
-  cudaMalloc(&cu_cluster_sizes, NUMCLUSTERSMAX * sizeof(float));
+  cudaMalloc(&cu_cluster_sizes, NUMCLUSTERSMAX * sizeof(int));
 
   /******************************************************************/
   // A. kmeans kalkulatu -- Calcular kmeans
@@ -390,12 +384,15 @@ int main(int argc, char *argv[]) {
       if (changed == 0)
         break; // Aldaketarik ez bada egon, atera -- Si no hay cambios, salir
       // printf("borrame, pero ha habido cambios\n");
+	  cudaMemset(cu_cluster_sizes,0,numclusters*sizeof(int));
+	  cudaMemset(cu_centroids,0,NUMCLUSTERSMAX * EMB_SIZE * sizeof(float));
       update_centroids<<<numBloques, numHilos>>>(
           cu_words, cu_centroids, cu_wordcent, numwords, numclusters, EMB_SIZE,
-          cluster_sizes);
-      cudaMemcpy(&cluster_sizes, cu_cluster_sizes, NUMCLUSTERSMAX * sizeof(int),
+          cu_cluster_sizes);
+      cudaDeviceSynchronize();
+      cudaMemcpy(cluster_sizes, cu_cluster_sizes, NUMCLUSTERSMAX * sizeof(int),
                  cudaMemcpyDeviceToHost);
-      cudaMemcpy(&centroids, cu_centroids, numclusters * EMB_SIZE * sizeof(int),
+      cudaMemcpy(centroids, cu_centroids, numclusters * EMB_SIZE * sizeof(float),
                  cudaMemcpyDeviceToHost);
     }
 
