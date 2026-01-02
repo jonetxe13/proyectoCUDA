@@ -4,6 +4,7 @@
 
 #include "biblioteca_funciones.h"
 // #include <cuda_runtime_api.h>
+#include <cstdio>
 #include <float.h>
 #include <math.h>
 // #include <sm_32_atomic_functions.hpp>
@@ -205,9 +206,8 @@ __global__ void cluster_homogeneity(float *words, struct clusterinfo *members,
        k += stride) { // por cada palabra en el cluster...
     int l = k / members[i].number;
     int j = k % members[i].number;
-    if (j > l) // repetir
+    if (j > l) // es el mismo if que con "resultados"
     {
-      // marcamos para no hacer (j,k)
       localsum += word_distance(&words[members[i].elements[l] * EMB_SIZE],
                                 &words[members[i].elements[j] * EMB_SIZE]);
     }
@@ -262,11 +262,26 @@ double validation(float *words, struct clusterinfo *members, float *centroids,
     number = members[i].number;
     if (number > 1) // min 2 members in the cluster
     {
+      float Tex;
+      cudaEvent_t t0, t1;
+
+      cudaEventCreate(&t0); // crear objeto
+      cudaEventCreate(&t1);
+
+      cudaEventRecord(t0); // tiempo en t
       cudaMemset(cu_resultado_global, 0, sizeof(float));
       cluster_homogeneity<<<numBloques, numHilos>>>(
           cu_words, cu_members, i, numclusters, number, cu_resultado_global);
+      cudaEventRecord(t1); // tiempo en t
       cudaMemcpy(&disbat, cu_resultado_global, sizeof(float),
                  cudaMemcpyDeviceToHost);
+      cudaEventSynchronize(t1); // esperar hasta que
+      // t1 esté listo
+      cudaEventElapsedTime(&Tex, t0, t1); // calcula el tiempo
+      // entre t0 y t1
+      printf(" Tex (kernela): %fms\n", Tex); // milisegundos
+      cudaEventDestroy(t0);                  // borrar objeto
+      cudaEventDestroy(t1);
       clust_homog[i] =
           disbat / (number * (number - 1) /
                     2); // zati bikote kopurua -- div num de parejas

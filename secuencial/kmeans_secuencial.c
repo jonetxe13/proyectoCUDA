@@ -168,10 +168,16 @@ double validation (float *words, struct clusterinfo *members, float *centroids, 
 	{
 		disbat = 0.0;
 		number = members[i].number; 
+	double tej;
 		if (number > 1)     // min 2 members in the cluster
 		{
+	struct timespec  t0, t1;
+	clock_gettime (CLOCK_REALTIME, &t0);
 			disbat = cluster_homogeneity(words, members, i, numclusters, number);
 			clust_homog[i] = disbat/(number*(number-1)/2);	// zati bikote kopurua -- div num de parejas
+	clock_gettime (CLOCK_REALTIME, &t1);
+	tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;
+	printf("\n Tej. (serie) = %1.3f ms\n\n", tej*1000);
 		}
 		else clust_homog[i] = 0;
 
