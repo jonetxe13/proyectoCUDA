@@ -367,15 +367,15 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   fscanf(f1, "%d", &numwords);
-  if (argc == 5)
+  if (argc >= 5)
     numwords = atoi(argv[4]);
   printf("numwords = %d\n", numwords);
 
-  if (argc == 6)
+  if (argc >= 6)
     numBloques = atoi(argv[5]);
   else
     numBloques = 20;
-  if (argc == 7)
+  if (argc >= 7)
     numHilos = atoi(argv[6]);
   else
     numHilos = 128;
