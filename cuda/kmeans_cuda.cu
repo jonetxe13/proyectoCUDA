@@ -242,7 +242,7 @@ double validation(float *words, struct clusterinfo *members, float *centroids,
   float *cu_words;
   float *cu_resultado_global;
   struct clusterinfo *cu_members;
-  int numBloques = 2, numHilos = 1024;
+  int numBloques = 4, numHilos = 512;
 
   // Kalkulatu clusterren trinkotasuna -- Calcular la homogeneidad de los
   // clusters Cluster bakoitzean, hitz bikote guztien arteko distantzien
