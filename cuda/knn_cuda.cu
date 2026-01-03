@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec t0, t1;
   double tej;
+  int numBloques,numHilos;
 
   if (argc < 3) {
     printf("Deia-Llamada: knn embeddins.dat similarities.dat [numwords]\n");
@@ -38,10 +39,21 @@ int main(int argc, char *argv[]) {
   }
 
   fscanf(f1, "%d", &numwords);
-  if (argc == 4)
+  if (argc >= 4)
     numwords = atoi(argv[3]);
   printf("numwords = %d\n", numwords);
-
+  if (argc >= 5)
+    numBloques= atoi(argv[4]);
+  else 
+    numBloques= 4;
+  printf("numBloques= %d\n", numBloques);
+  if (argc >= 6)
+    numHilos= atoi(argv[5]);
+  else 
+    numHilos= 100;
+	
+  printf("numHilos= %d\n", numHilos);
+	
   /******************************************************************
   // Asignar memoria dinámica a las estructuras de datos words y similarities
 
@@ -70,7 +82,7 @@ int main(int argc, char *argv[]) {
 
   //    OSATZEKO - PARA COMPLETAR
    ******************************************************************/
-  knn_complet(words, numwords, similarities);
+  knn_complet(words, numwords, similarities,numBloques,numHilos);
   clock_gettime(CLOCK_REALTIME, &t1);
 
   tej = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / (double)1e9;

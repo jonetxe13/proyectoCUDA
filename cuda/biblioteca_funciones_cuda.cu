@@ -196,10 +196,9 @@ __global__ void knn_cuda(float *words, int *numwords, float *similarities) {
   }
 }
 
-void knn_complet(float *words, int numwords, float *similarities) {
+void knn_complet(float *words, int numwords, float *similarities,int numBloques, int tamBloques) {
   float *wordsCuda, *similaritiesCuda, *normsCuda;
   int *numwordsCuda;
-  int numBloques = (numwords + 255) / 256, tamBloques = 1024;
 
   float Tex;
   cudaEvent_t t0, t1;

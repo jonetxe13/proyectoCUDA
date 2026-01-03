@@ -42,7 +42,7 @@ __global__ void reduc_analogy(int idx1,int idx2,int idx3,int numWords,int * indi
 //-------------------
 
 // kNN para todas las palabras
-void knn_complet(float *words, int numwords, float *similarities);
+void knn_complet(float *words, int numwords, float *similarities,int numBloques, int tamBloques);
 //-------------------
 // Debuging:
 //-------------------
